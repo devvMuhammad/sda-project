@@ -2,21 +2,22 @@
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
 import { Product } from '@/constants/data';
+import { ProductData } from '@/lib/adapters/product-adapter';
 import { Column, ColumnDef } from '@tanstack/react-table';
 import { CheckCircle2, Text, XCircle } from 'lucide-react';
 import Image from 'next/image';
 import { CellAction } from './cell-action';
 import { CATEGORY_OPTIONS } from './options';
 
-export const columns: ColumnDef<Product>[] = [
+export const columns: ColumnDef<ProductData>[] = [
   {
-    accessorKey: 'photo_url',
+    accessorKey: 'image',
     header: 'IMAGE',
     cell: ({ row }) => {
       return (
         <div className='relative aspect-square'>
           <Image
-            src={row.getValue('photo_url')}
+            src={row.getValue('image')}
             alt={row.getValue('name')}
             fill
             className='rounded-lg'
@@ -28,10 +29,10 @@ export const columns: ColumnDef<Product>[] = [
   {
     id: 'name',
     accessorKey: 'name',
-    header: ({ column }: { column: Column<Product, unknown> }) => (
+    header: ({ column }: { column: Column<ProductData, unknown> }) => (
       <DataTableColumnHeader column={column} title='Name' />
     ),
-    cell: ({ cell }) => <div>{cell.getValue<Product['name']>()}</div>,
+    cell: ({ cell }) => <div>{cell.getValue<ProductData['name']>()}</div>,
     meta: {
       label: 'Name',
       placeholder: 'Search products...',
@@ -43,11 +44,11 @@ export const columns: ColumnDef<Product>[] = [
   {
     id: 'category',
     accessorKey: 'category',
-    header: ({ column }: { column: Column<Product, unknown> }) => (
+    header: ({ column }: { column: Column<ProductData, unknown> }) => (
       <DataTableColumnHeader column={column} title='Category' />
     ),
     cell: ({ cell }) => {
-      const status = cell.getValue<Product['category']>();
+      const status = cell.getValue<ProductData['category']>();
       const Icon = status === 'active' ? CheckCircle2 : XCircle;
 
       return (
@@ -65,8 +66,11 @@ export const columns: ColumnDef<Product>[] = [
     }
   },
   {
-    accessorKey: 'price',
-    header: 'PRICE'
+    accessorKey: 'formattedPrice',
+    header: 'PRICE',
+    cell: ({ row }) => {
+      return <div>{row.getValue('formattedPrice')}</div>;
+    }
   },
   {
     accessorKey: 'description',

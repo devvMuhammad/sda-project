@@ -5,6 +5,8 @@ import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-h
 import { DataTableFacetedFilter } from '@/components/ui/table/data-table-faceted-filter';
 import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { Order, ordersData } from '@/constants/data';
+import { OrderData } from '@/lib/adapters/order-adapter';
+import { OrdersApiClient } from '../api-client';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -20,7 +22,7 @@ import {
   useReactTable
 } from '@tanstack/react-table';
 import { format } from 'date-fns';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
   IconCreditCard,
@@ -40,6 +42,32 @@ export default function OrderListingPage() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [orders, setOrders] = useState<OrderData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Fetch orders using the adapter pattern
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        // Using the OrdersApiClient which internally uses the OrderAdapter
+        const response = await OrdersApiClient.getOrders();
+        if (response && response.orders) {
+          setOrders(response.orders);
+        } else {
+          console.error('Unexpected response format:', response);
+          setOrders([]);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   const statusOptions = [
     { label: 'Pending', value: 'pending' },
@@ -55,7 +83,7 @@ export default function OrderListingPage() {
     { label: 'Bank Transfer', value: 'bank_transfer' },
   ];
 
-  const columns = useMemo<ColumnDef<Order>[]>(
+  const columns = useMemo<ColumnDef<OrderData>[]>(
     () => [
       {
         accessorKey: 'id',
@@ -80,7 +108,7 @@ export default function OrderListingPage() {
           return (
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{customer.initials}</AvatarFallback>
               </Avatar>
               <div>
                 <div className="font-medium">{customer.name}</div>
@@ -101,53 +129,23 @@ export default function OrderListingPage() {
           <DataTableColumnHeader column={column} title='Status' />
         ),
         cell: ({ row }) => {
-          const status = row.getValue('status') as string;
-
-          const statusMap: Record<string, { label: string, color: string, icon: React.ReactNode }> = {
-            pending: {
-              label: 'Pending',
-              color: 'bg-yellow-500',
-              icon: <IconClock className="h-4 w-4 text-yellow-500" />
-            },
-            processing: {
-              label: 'Processing',
-              color: 'bg-blue-500',
-              icon: <IconPackage className="h-4 w-4 text-blue-500" />
-            },
-            shipped: {
-              label: 'Shipped',
-              color: 'bg-purple-500',
-              icon: <IconTruck className="h-4 w-4 text-purple-500" />
-            },
-            delivered: {
-              label: 'Delivered',
-              color: 'bg-green-500',
-              icon: <IconCheck className="h-4 w-4 text-green-500" />
-            },
-            cancelled: {
-              label: 'Cancelled',
-              color: 'bg-red-500',
-              icon: <IconX className="h-4 w-4 text-red-500" />
-            },
-          };
-
-          const statusInfo = statusMap[status] || {
-            label: status,
-            color: 'bg-gray-500',
-            icon: null
-          };
+          const status = row.original.status;
 
           return (
             <div className="flex items-center gap-2">
-              {statusInfo.icon}
+              {status.value === 'pending' && <IconClock className="h-4 w-4 text-yellow-500" />}
+              {status.value === 'processing' && <IconPackage className="h-4 w-4 text-blue-500" />}
+              {status.value === 'shipped' && <IconTruck className="h-4 w-4 text-purple-500" />}
+              {status.value === 'delivered' && <IconCheck className="h-4 w-4 text-green-500" />}
+              {status.value === 'cancelled' && <IconX className="h-4 w-4 text-red-500" />}
               <Badge variant="outline" className="capitalize">
-                {statusInfo.label}
+                {status.label}
               </Badge>
             </div>
           );
         },
         filterFn: (row, id, value) => {
-          return value.includes(row.getValue(id));
+          return value.includes(row.original.status.value);
         },
         enableSorting: true,
         enableHiding: false,
@@ -158,58 +156,34 @@ export default function OrderListingPage() {
         }
       },
       {
-        accessorKey: 'total',
+        accessorKey: 'formattedTotal',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title='Total' />
         ),
         cell: ({ row }) => {
-          const amount = parseFloat(row.getValue('total'));
-          const formatted = new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-          }).format(amount);
-
-          return <div className="font-medium">{formatted}</div>;
+          return <div className="font-medium">{row.getValue('formattedTotal')}</div>;
         },
         enableSorting: true,
       },
       {
-        accessorKey: 'payment_method',
+        accessorKey: 'paymentMethod',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title='Payment Method' />
         ),
         cell: ({ row }) => {
-          const method = row.getValue('payment_method') as string;
-
-          const methodMap: Record<string, { label: string, icon: React.ReactNode }> = {
-            credit_card: {
-              label: 'Credit Card',
-              icon: <IconCreditCard className="h-4 w-4" />
-            },
-            paypal: {
-              label: 'PayPal',
-              icon: <IconCash className="h-4 w-4" />
-            },
-            bank_transfer: {
-              label: 'Bank Transfer',
-              icon: <IconBuildingBank className="h-4 w-4" />
-            },
-          };
-
-          const methodInfo = methodMap[method] || {
-            label: method,
-            icon: null
-          };
+          const method = row.original.paymentMethod;
 
           return (
             <div className="flex items-center gap-2">
-              {methodInfo.icon}
-              <span className="capitalize">{methodInfo.label}</span>
+              {method.value === 'credit_card' && <IconCreditCard className="h-4 w-4" />}
+              {method.value === 'paypal' && <IconCash className="h-4 w-4" />}
+              {method.value === 'bank_transfer' && <IconBuildingBank className="h-4 w-4" />}
+              <span className="capitalize">{method.label}</span>
             </div>
           );
         },
         filterFn: (row, id, value) => {
-          return value.includes(row.getValue(id));
+          return value.includes(row.original.paymentMethod.value);
         },
         meta: {
           variant: 'multiSelect',
@@ -218,12 +192,12 @@ export default function OrderListingPage() {
         }
       },
       {
-        accessorKey: 'created_at',
+        accessorKey: 'createdAt',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title='Date' />
         ),
         cell: ({ row }) => {
-          const date = new Date(row.getValue('created_at'));
+          const date = row.getValue('createdAt') as Date;
           return <div>{format(date, 'PPP')}</div>;
         },
         sortingFn: 'datetime',
@@ -243,7 +217,7 @@ export default function OrderListingPage() {
   );
 
   const table = useReactTable({
-    data: ordersData,
+    data: orders,
     columns,
     state: {
       sorting,
