@@ -1,4 +1,4 @@
-import { Task } from '../utils/store';
+import { KanbanProduct } from '../utils/store';
 import { useDndContext, type UniqueIdentifier } from '@dnd-kit/core';
 import { SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ColumnActions } from './column-action';
-import { TaskCard } from './task-card';
+import { ProductCard } from './product-card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export interface Column {
@@ -25,14 +25,14 @@ export interface ColumnDragData {
 
 interface BoardColumnProps {
   column: Column;
-  tasks: Task[];
+  products: KanbanProduct[];
   isOverlay?: boolean;
 }
 
-export function BoardColumn({ column, tasks, isOverlay }: BoardColumnProps) {
-  const tasksIds = useMemo(() => {
-    return tasks.map((task) => task.id);
-  }, [tasks]);
+export function BoardColumn({ column, products, isOverlay }: BoardColumnProps) {
+  const productsIds = useMemo(() => {
+    return products.map((product) => product.id);
+  }, [products]);
 
   const {
     setNodeRef,
@@ -58,7 +58,7 @@ export function BoardColumn({ column, tasks, isOverlay }: BoardColumnProps) {
   };
 
   const variants = cva(
-    'h-[75vh] max-h-[75vh] w-[350px] max-w-full bg-secondary flex flex-col shrink-0 snap-center',
+    'h-[75vh] max-h-[75vh] w-[320px] max-w-full bg-secondary flex flex-col shrink-0 snap-center shadow-sm',
     {
       variants: {
         dragging: {
@@ -78,7 +78,7 @@ export function BoardColumn({ column, tasks, isOverlay }: BoardColumnProps) {
         dragging: isOverlay ? 'overlay' : isDragging ? 'over' : undefined
       })}
     >
-      <CardHeader className='space-between flex flex-row items-center border-b-2 p-4 text-left font-semibold'>
+      <CardHeader className='space-between flex flex-row items-center border-b p-3 text-left font-medium'>
         <Button
           variant={'ghost'}
           {...attributes}
@@ -86,21 +86,25 @@ export function BoardColumn({ column, tasks, isOverlay }: BoardColumnProps) {
           className='text-primary/50 relative -ml-2 h-auto cursor-grab p-1'
         >
           <span className='sr-only'>{`Move column: ${column.title}`}</span>
-          <IconGripVertical />
+          <IconGripVertical size={18} />
         </Button>
-        {/* <span className="mr-auto mt-0!"> {column.title}</span> */}
-        {/* <Input
-          defaultValue={column.title}
-          className="text-base mt-0! mr-auto"
-        /> */}
         <ColumnActions id={column.id} title={column.title} />
       </CardHeader>
-      <CardContent className='flex grow flex-col gap-4 overflow-x-hidden p-2'>
+      <CardContent className='flex grow flex-col p-2 pt-3 overflow-x-hidden'>
+        <div className='text-xs font-medium text-muted-foreground mb-2 ml-1 flex justify-between pr-1'>
+          <span>PRODUCTS ({products.length})</span>
+          <span>STATUS: {column.title}</span>
+        </div>
         <ScrollArea className='h-full'>
-          <SortableContext items={tasksIds}>
-            {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
+          <SortableContext items={productsIds}>
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
+            {products.length === 0 && (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No products yet
+              </div>
+            )}
           </SortableContext>
         </ScrollArea>
       </CardContent>
@@ -111,7 +115,7 @@ export function BoardColumn({ column, tasks, isOverlay }: BoardColumnProps) {
 export function BoardContainer({ children }: { children: React.ReactNode }) {
   const dndContext = useDndContext();
 
-  const variations = cva('px-2  pb-4 md:px-0 flex lg:justify-start', {
+  const variations = cva('px-2 pb-4 md:px-0 flex lg:justify-start', {
     variants: {
       dragging: {
         default: '',

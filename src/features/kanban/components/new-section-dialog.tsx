@@ -10,11 +10,11 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-
-import { useTaskStore } from '../utils/store';
+import { useKanbanStore } from '../utils/store';
+import { IconPlus } from '@tabler/icons-react';
 
 export default function NewSectionDialog() {
-  const addCol = useTaskStore((state) => state.addCol);
+  const addCol = useKanbanStore((state) => state.addCol);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,19 +30,24 @@ export default function NewSectionDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant='secondary' size='lg' className='w-full'>
-          ＋ Add New Section
+        <Button
+          variant='outline'
+          size='lg'
+          className='w-full h-[75vh] max-h-[75vh] flex flex-col items-center justify-center shadow-sm bg-secondary/50 border-dashed'
+        >
+          <IconPlus className="h-6 w-6 mb-2 text-muted-foreground" />
+          <span className="text-muted-foreground">Add New Category</span>
         </Button>
       </DialogTrigger>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
-          <DialogTitle>Add New Section</DialogTitle>
+          <DialogTitle>Add New Category</DialogTitle>
           <DialogDescription>
-            What section you want to add today?
+            Create a new category to organize your products
           </DialogDescription>
         </DialogHeader>
         <form
-          id='todo-form'
+          id='category-form'
           className='grid gap-4 py-4'
           onSubmit={handleSubmit}
         >
@@ -50,15 +55,16 @@ export default function NewSectionDialog() {
             <Input
               id='title'
               name='title'
-              placeholder='Section title...'
+              placeholder='Category title...'
               className='col-span-4'
+              autoFocus
             />
           </div>
         </form>
         <DialogFooter>
           <DialogTrigger asChild>
-            <Button type='submit' size='sm' form='todo-form'>
-              Add Section
+            <Button type='submit' size='sm' form='category-form'>
+              Add Category
             </Button>
           </DialogTrigger>
         </DialogFooter>

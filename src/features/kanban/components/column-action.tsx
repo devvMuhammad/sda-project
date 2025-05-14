@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { useTaskStore } from '../utils/store';
+import { useKanbanStore } from '../utils/store';
 import { UniqueIdentifier } from '@dnd-kit/core';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -32,8 +32,8 @@ export function ColumnActions({
   id: UniqueIdentifier;
 }) {
   const [name, setName] = React.useState(title);
-  const updateCol = useTaskStore((state) => state.updateCol);
-  const removeCol = useTaskStore((state) => state.removeCol);
+  const updateCol = useKanbanStore((state) => state.updateCol);
+  const removeCol = useKanbanStore((state) => state.removeCol);
   const [editDisable, setIsEditDisable] = React.useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -80,7 +80,7 @@ export function ColumnActions({
             onSelect={() => setShowDeleteDialog(true)}
             className='text-red-600'
           >
-            Delete Section
+            Delete Category
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -88,10 +88,10 @@ export function ColumnActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Are you sure want to delete column?
+              Are you sure want to delete category?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              NOTE: All tasks related to this category will also be deleted.
+              NOTE: All products related to this category will also be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -104,7 +104,7 @@ export function ColumnActions({
 
                 setShowDeleteDialog(false);
                 removeCol(id);
-                toast('This column has been deleted.');
+                toast('This category has been deleted.');
               }}
             >
               Delete
