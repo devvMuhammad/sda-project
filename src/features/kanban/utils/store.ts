@@ -1,33 +1,24 @@
 import { create } from 'zustand';
-import { v4 as uuid } from 'uuid';
 import { persist } from 'zustand/middleware';
 import { UniqueIdentifier } from '@dnd-kit/core';
 import { Column } from '../components/board-column';
 import { CATEGORY_OPTIONS } from '@/features/products/components/product-tables/options';
 import { ProductData } from '@/lib/adapters/product-adapter';
 
-export type Status = 'TODO' | 'IN_PROGRESS' | 'DONE';
+// Use product categories instead of status
+export type Category = 'Electronics' | 'Furniture' | 'Clothing' | 'Toys' | 'Groceries' | 'Books' | 'Jewelry' | 'Beauty Products';
 
-const defaultCols = [
-  {
-    id: 'TODO' as const,
-    title: 'To Review'
-  },
-  {
-    id: 'IN_PROGRESS' as const,
-    title: 'In Development'
-  },
-  {
-    id: 'DONE' as const,
-    title: 'Completed'
-  }
-] satisfies Column[];
+// Create columns based on product categories
+const defaultCols = CATEGORY_OPTIONS.map(option => ({
+  id: option.value,
+  title: option.label
+})) satisfies Column[];
 
-export type ColumnId = (typeof defaultCols)[number]['id'];
+export type ColumnId = string;
 
 // Extending the ProductData type for kanban functionality
-export type KanbanProduct = ProductData & {
-  status: Status;
+export type KanbanProduct = Omit<ProductData, 'category'> & {
+  columnId: ColumnId;
 };
 
 export type State = {
@@ -47,8 +38,7 @@ const initialProducts: KanbanProduct[] = [
     updatedAt: new Date(),
     price: 999.99,
     formattedPrice: '$999.99',
-    category: 'Electronics',
-    status: 'TODO'
+    columnId: 'Electronics'
   },
   {
     id: 2,
@@ -59,13 +49,12 @@ const initialProducts: KanbanProduct[] = [
     updatedAt: new Date(),
     price: 1299.99,
     formattedPrice: '$1,299.99',
-    category: 'Furniture',
-    status: 'TODO'
+    columnId: 'Furniture'
   }
 ];
 
 export type Actions = {
-  addProduct: (product: Omit<KanbanProduct, 'id' | 'status'>) => void;
+  addProduct: (product: Omit<ProductData, 'id' | 'category'> & { columnId: ColumnId }) => void;
   addCol: (title: string) => void;
   dragProduct: (id: string | null) => void;
   removeProduct: (id: number) => void;
@@ -73,6 +62,7 @@ export type Actions = {
   setProducts: (updatedProducts: KanbanProduct[]) => void;
   setCols: (cols: Column[]) => void;
   updateCol: (id: UniqueIdentifier, newName: string) => void;
+  resetStore: () => void;
   // Observer pattern methods
   subscribe: (callback: () => void) => () => void;
   getState: () => State;
@@ -94,7 +84,7 @@ export const useKanbanStore = create<State & Actions>()(
           const newProduct: KanbanProduct = {
             ...product,
             id: Math.max(0, ...state.products.map(p => p.id)) + 1,
-            status: 'TODO'
+            columnId: String(product.columnId)
           };
           const newState = {
             products: [...state.products, newProduct]
@@ -119,10 +109,11 @@ export const useKanbanStore = create<State & Actions>()(
       // Method to add a column
       addCol: (title: string) =>
         set((state) => {
+          const id = title.replace(/\s+/g, '_').toUpperCase();
           const newState = {
             columns: [
               ...state.columns,
-              { title, id: state.columns.length ? title.toUpperCase() : 'TODO' }
+              { title, id }
             ]
           };
           subscribers.forEach(callback => callback());
@@ -149,7 +140,13 @@ export const useKanbanStore = create<State & Actions>()(
       removeCol: (id: UniqueIdentifier) =>
         set((state) => {
           const newState = {
-            columns: state.columns.filter((col) => col.id !== id)
+            columns: state.columns.filter((col) => col.id !== id),
+            // Move products from removed column to the first column
+            products: state.products.map(product =>
+              product.columnId === String(id) && state.columns.length > 1
+                ? { ...product, columnId: String(state.columns[0].id) }
+                : product
+            )
           };
           subscribers.forEach(callback => callback());
           return newState;
@@ -167,6 +164,20 @@ export const useKanbanStore = create<State & Actions>()(
         subscribers.forEach(callback => callback());
       },
 
+      // Reset store to initial state
+      resetStore: () => {
+        set({
+          products: initialProducts,
+          columns: defaultCols,
+          draggedProduct: null
+        });
+        // Clear localStorage
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem('kanban-product-store');
+        }
+        subscribers.forEach(callback => callback());
+      },
+
       // Observer pattern method to subscribe to state changes
       subscribe: (callback: () => void) => {
         subscribers.push(callback);
@@ -178,6 +189,10 @@ export const useKanbanStore = create<State & Actions>()(
       // Method to get current state
       getState: () => get()
     }),
-    { name: 'kanban-product-store', skipHydration: true }
+    {
+      name: 'kanban-product-store',
+      skipHydration: true,
+      version: 2 // Add version to force reset of persisted data
+    }
   )
 );

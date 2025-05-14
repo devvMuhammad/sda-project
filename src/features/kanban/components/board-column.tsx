@@ -3,7 +3,7 @@ import { useDndContext, type UniqueIdentifier } from '@dnd-kit/core';
 import { SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cva } from 'class-variance-authority';
-import { IconGripVertical, IconPackage } from '@tabler/icons-react';
+import { IconGripVertical, IconCategory } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,13 +85,13 @@ export function BoardColumn({ column, products, isOverlay }: BoardColumnProps) {
             {...listeners}
             className='text-primary/50 relative -ml-2 h-auto cursor-grab p-1'
           >
-            <span className='sr-only'>{`Move column: ${column.title}`}</span>
+            <span className='sr-only'>{`Move category: ${column.title}`}</span>
             <IconGripVertical size={16} />
           </Button>
           <ColumnActions id={column.id} title={column.title} />
         </div>
         <div className='text-xs font-medium flex items-center gap-1.5 ml-auto text-muted-foreground'>
-          <IconPackage size={14} />
+          <IconCategory size={14} />
           <span>{products.length}</span>
         </div>
       </div>

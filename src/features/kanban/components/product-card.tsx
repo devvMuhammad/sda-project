@@ -4,7 +4,7 @@ import { KanbanProduct } from '../utils/store';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cva } from 'class-variance-authority';
-import { IconGripVertical, IconTag, IconCoin } from '@tabler/icons-react';
+import { IconGripVertical, IconCoin } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
@@ -71,17 +71,7 @@ export function ProductCard({ product, isOverlay }: ProductCardProps) {
           <IconGripVertical size={14} />
         </Button>
 
-        <div className="flex justify-between items-start">
-          <div className='mb-1 font-medium text-sm line-clamp-1 pr-1 flex-1'>{product.name}</div>
-          <Badge
-            variant='outline'
-            className='font-medium py-0.5 px-1.5 text-xs flex items-center gap-1 ml-1 shrink-0'
-          >
-            <IconTag size={10} />
-            {product.category}
-          </Badge>
-        </div>
-
+        <div className='font-medium text-sm line-clamp-1 pr-1 mb-1'>{product.name}</div>
         <div className='text-xs text-muted-foreground line-clamp-2 mb-1.5'>{product.description}</div>
 
         <div className='flex justify-between items-center'>

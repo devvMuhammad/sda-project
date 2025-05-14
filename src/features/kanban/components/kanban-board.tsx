@@ -19,39 +19,25 @@ import {
 import { SortableContext, arrayMove } from '@dnd-kit/sortable';
 import type { Column } from './board-column';
 import { BoardColumn, BoardContainer } from './board-column';
-import NewSectionDialog from './new-section-dialog';
+import NewCategoryDialog from './new-category-dialog';
 import { ProductCard } from './product-card';
 // import { coordinateGetter } from "./multipleContainersKeyboardPreset";
 
-const defaultCols = [
-  {
-    id: 'TODO' as const,
-    title: 'To Review'
-  },
-  {
-    id: 'IN_PROGRESS' as const,
-    title: 'In Development'
-  },
-  {
-    id: 'DONE' as const,
-    title: 'Completed'
-  }
-] satisfies Column[];
-
-export type ColumnId = (typeof defaultCols)[number]['id'];
+export type ColumnId = string;
 
 export function KanbanBoard() {
   // Use the updated Kanban store with products
   const columns = useKanbanStore((state) => state.columns);
   const setColumns = useKanbanStore((state) => state.setCols);
-  const pickedUpProductColumn = useRef<ColumnId | 'TODO' | 'IN_PROGRESS' | 'DONE'>(
-    'TODO'
+  const pickedUpProductColumn = useRef<string>(
+    ''
   );
   const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
 
   // Updated to use products instead of tasks
   const products = useKanbanStore((state) => state.products);
   const setProducts = useKanbanStore((state) => state.setProducts);
+  const resetStore = useKanbanStore((state) => state.resetStore);
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
   const [isMounted, setIsMounted] = useState<Boolean>(false);
 
@@ -69,6 +55,20 @@ export function KanbanBoard() {
       unsubscribe();
     };
   }, []);
+
+  // Reset store on first load to ensure we have the latest default columns
+  useEffect(() => {
+    // Only reset if the columns look like old format (To Review, etc.)
+    const hasOldColumns = columns.some(col =>
+      col.title === 'To Review' ||
+      col.title === 'In Development' ||
+      col.title === 'Completed'
+    );
+
+    if (hasOldColumns) {
+      resetStore();
+    }
+  }, [columns, resetStore]);
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -89,7 +89,7 @@ export function KanbanBoard() {
   if (!isMounted) return null;
 
   function getDraggingProductData(productId: UniqueIdentifier, columnId: ColumnId) {
-    const productsInColumn = products.filter((product) => product.status === columnId);
+    const productsInColumn = products.filter((product) => product.columnId === columnId);
     const productPosition = productsInColumn.findIndex((product) => product.id === Number(productId));
     const column = columns.find((col) => col.id === columnId);
     return {
@@ -108,7 +108,7 @@ export function KanbanBoard() {
         return `Picked up Column ${startColumn?.title} at position: ${startColumnIdx + 1
           } of ${columnsId.length}`;
       } else if (active.data.current?.type === 'Product') {
-        pickedUpProductColumn.current = active.data.current.product.status;
+        pickedUpProductColumn.current = active.data.current.product.columnId;
         const { productsInColumn, productPosition, column } = getDraggingProductData(
           active.id,
           pickedUpProductColumn.current
@@ -133,9 +133,9 @@ export function KanbanBoard() {
       ) {
         const { productsInColumn, productPosition, column } = getDraggingProductData(
           over.id,
-          over.data.current.product.status
+          over.data.current.product.columnId
         );
-        if (over.data.current.product.status !== pickedUpProductColumn.current) {
+        if (over.data.current.product.columnId !== pickedUpProductColumn.current) {
           return `Product ${active.data.current.product.name
             } was moved over column ${column?.title} in position ${productPosition + 1
             } of ${productsInColumn.length}`;
@@ -146,7 +146,7 @@ export function KanbanBoard() {
     },
     onDragEnd({ active, over }) {
       if (!hasDraggableData(active) || !hasDraggableData(over)) {
-        pickedUpProductColumn.current = 'TODO';
+        pickedUpProductColumn.current = '';
         return;
       }
       if (
@@ -164,19 +164,19 @@ export function KanbanBoard() {
       ) {
         const { productsInColumn, productPosition, column } = getDraggingProductData(
           over.id,
-          over.data.current.product.status
+          over.data.current.product.columnId
         );
-        if (over.data.current.product.status !== pickedUpProductColumn.current) {
+        if (over.data.current.product.columnId !== pickedUpProductColumn.current) {
           return `Product was dropped into column ${column?.title} in position ${productPosition + 1
             } of ${productsInColumn.length}`;
         }
         return `Product was dropped into position ${productPosition + 1} of ${productsInColumn.length
           } in column ${column?.title}`;
       }
-      pickedUpProductColumn.current = 'TODO';
+      pickedUpProductColumn.current = '';
     },
     onDragCancel({ active }) {
-      pickedUpProductColumn.current = 'TODO';
+      pickedUpProductColumn.current = '';
       if (!hasDraggableData(active)) return;
       return `Dragging ${active.data.current?.type} cancelled.`;
     }
@@ -199,16 +199,16 @@ export function KanbanBoard() {
               <Fragment key={col.id}>
                 <BoardColumn
                   column={col}
-                  products={products.filter((product) => product.status === col.id)}
+                  products={products.filter((product) => product.columnId === col.id)}
                 />
                 {index === columns?.length - 1 && (
                   <div className='w-[300px]'>
-                    <NewSectionDialog />
+                    <NewCategoryDialog />
                   </div>
                 )}
               </Fragment>
             ))}
-            {!columns.length && <NewSectionDialog />}
+            {!columns.length && <NewCategoryDialog />}
           </SortableContext>
         </BoardContainer>
 
@@ -219,7 +219,7 @@ export function KanbanBoard() {
                 <BoardColumn
                   isOverlay
                   column={activeColumn}
-                  products={products.filter((product) => product.status === activeColumn.id)}
+                  products={products.filter((product) => product.columnId === activeColumn.id)}
                 />
               )}
               {activeProduct && <ProductCard product={activeProduct} isOverlay />}
@@ -296,9 +296,14 @@ export function KanbanBoard() {
       const activeProduct = products[activeIndex];
       const overProduct = products[overIndex];
 
-      if (activeProduct && overProduct && activeProduct.status !== overProduct.status) {
-        activeProduct.status = overProduct.status;
-        setProducts(arrayMove(products, activeIndex, overIndex - 1));
+      if (activeProduct && overProduct && activeProduct.columnId !== overProduct.columnId) {
+        // Update the column ID when moving between columns
+        const updatedProducts = [...products];
+        updatedProducts[activeIndex] = {
+          ...activeProduct,
+          columnId: overProduct.columnId
+        };
+        setProducts(arrayMove(updatedProducts, activeIndex, overIndex - 1));
       } else {
         setProducts(arrayMove(products, activeIndex, overIndex));
       }
@@ -314,7 +319,7 @@ export function KanbanBoard() {
         const updatedProducts = [...products];
         updatedProducts[activeIndex] = {
           ...activeProduct,
-          status: overId as ColumnId
+          columnId: overId as string
         };
         setProducts(updatedProducts);
       }

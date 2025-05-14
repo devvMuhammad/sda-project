@@ -46,7 +46,7 @@ export default function NewProductDialog() {
       price,
       formattedPrice,
       image,
-      category,
+      columnId: category,
       createdAt: new Date(),
       updatedAt: new Date()
     };
