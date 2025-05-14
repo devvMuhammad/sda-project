@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { KanbanProduct } from '../utils/store';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -43,11 +43,11 @@ export function ProductCard({ product, isOverlay }: ProductCardProps) {
     transform: CSS.Translate.toString(transform)
   };
 
-  const variants = cva('mb-3', {
+  const variants = cva('mb-2 relative', {
     variants: {
       dragging: {
-        over: 'ring-2 opacity-30',
-        overlay: 'ring-2 ring-primary'
+        over: 'ring-1 opacity-30',
+        overlay: 'ring-1 ring-primary'
       }
     }
   });
@@ -60,33 +60,36 @@ export function ProductCard({ product, isOverlay }: ProductCardProps) {
         dragging: isOverlay ? 'overlay' : isDragging ? 'over' : undefined
       })}
     >
-      <CardHeader className='space-between border-secondary relative flex flex-row items-center border-b p-2'>
+      <CardContent className='p-2 pl-6'>
         <Button
-          variant={'ghost'}
+          variant='ghost'
           {...attributes}
           {...listeners}
-          className='text-secondary-foreground/50 -ml-1.5 h-auto cursor-grab p-1'
+          className='absolute left-0.5 top-2 h-5 w-5 p-0 cursor-grab text-muted-foreground/50 hover:text-muted-foreground hover:bg-secondary'
         >
           <span className='sr-only'>Move product</span>
-          <IconGripVertical size={16} />
+          <IconGripVertical size={14} />
         </Button>
-        <Badge
-          variant='outline'
-          className='ml-auto font-medium py-0.5 px-2 text-xs flex items-center gap-1'
-        >
-          <IconTag size={12} />
-          {product.category}
-        </Badge>
-      </CardHeader>
-      <CardContent className='p-3 pt-2.5'>
-        <div className='mb-1 font-medium text-sm line-clamp-1'>{product.name}</div>
-        <div className='text-xs text-muted-foreground line-clamp-2 mb-2'>{product.description}</div>
+
+        <div className="flex justify-between items-start">
+          <div className='mb-1 font-medium text-sm line-clamp-1 pr-1 flex-1'>{product.name}</div>
+          <Badge
+            variant='outline'
+            className='font-medium py-0.5 px-1.5 text-xs flex items-center gap-1 ml-1 shrink-0'
+          >
+            <IconTag size={10} />
+            {product.category}
+          </Badge>
+        </div>
+
+        <div className='text-xs text-muted-foreground line-clamp-2 mb-1.5'>{product.description}</div>
+
         <div className='flex justify-between items-center'>
           <Badge
             variant='secondary'
             className='font-semibold text-xs flex items-center gap-1'
           >
-            <IconCoin size={12} />
+            <IconCoin size={10} />
             {product.formattedPrice}
           </Badge>
           <div className='text-xs text-muted-foreground'>

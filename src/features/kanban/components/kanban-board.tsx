@@ -86,7 +86,7 @@ export function KanbanBoard() {
     useKanbanStore.persist.rehydrate();
   }, []);
 
-  if (!isMounted) return;
+  if (!isMounted) return null;
 
   function getDraggingProductData(productId: UniqueIdentifier, columnId: ColumnId) {
     const productsInColumn = products.filter((product) => product.status === columnId);
@@ -183,49 +183,51 @@ export function KanbanBoard() {
   };
 
   return (
-    <DndContext
-      accessibility={{
-        announcements
-      }}
-      sensors={sensors}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragOver={onDragOver}
-    >
-      <BoardContainer>
-        <SortableContext items={columnsId}>
-          {columns?.map((col, index) => (
-            <Fragment key={col.id}>
-              <BoardColumn
-                column={col}
-                products={products.filter((product) => product.status === col.id)}
-              />
-              {index === columns?.length - 1 && (
-                <div className='w-[300px]'>
-                  <NewSectionDialog />
-                </div>
-              )}
-            </Fragment>
-          ))}
-          {!columns.length && <NewSectionDialog />}
-        </SortableContext>
-      </BoardContainer>
+    <div className="h-full">
+      <DndContext
+        accessibility={{
+          announcements
+        }}
+        sensors={sensors}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragOver={onDragOver}
+      >
+        <BoardContainer>
+          <SortableContext items={columnsId}>
+            {columns?.map((col, index) => (
+              <Fragment key={col.id}>
+                <BoardColumn
+                  column={col}
+                  products={products.filter((product) => product.status === col.id)}
+                />
+                {index === columns?.length - 1 && (
+                  <div className='w-[300px]'>
+                    <NewSectionDialog />
+                  </div>
+                )}
+              </Fragment>
+            ))}
+            {!columns.length && <NewSectionDialog />}
+          </SortableContext>
+        </BoardContainer>
 
-      {'document' in window &&
-        createPortal(
-          <DragOverlay>
-            {activeColumn && (
-              <BoardColumn
-                isOverlay
-                column={activeColumn}
-                products={products.filter((product) => product.status === activeColumn.id)}
-              />
-            )}
-            {activeProduct && <ProductCard product={activeProduct} isOverlay />}
-          </DragOverlay>,
-          document.body
-        )}
-    </DndContext>
+        {'document' in window &&
+          createPortal(
+            <DragOverlay>
+              {activeColumn && (
+                <BoardColumn
+                  isOverlay
+                  column={activeColumn}
+                  products={products.filter((product) => product.status === activeColumn.id)}
+                />
+              )}
+              {activeProduct && <ProductCard product={activeProduct} isOverlay />}
+            </DragOverlay>,
+            document.body
+          )}
+      </DndContext>
+    </div>
   );
 
   function onDragStart(event: DragStartEvent) {

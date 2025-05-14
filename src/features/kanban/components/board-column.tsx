@@ -3,13 +3,12 @@ import { useDndContext, type UniqueIdentifier } from '@dnd-kit/core';
 import { SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cva } from 'class-variance-authority';
-import { IconGripVertical } from '@tabler/icons-react';
+import { IconGripVertical, IconPackage } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ColumnActions } from './column-action';
 import { ProductCard } from './product-card';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export interface Column {
   id: UniqueIdentifier;
@@ -58,13 +57,13 @@ export function BoardColumn({ column, products, isOverlay }: BoardColumnProps) {
   };
 
   const variants = cva(
-    'h-[75vh] max-h-[75vh] w-[320px] max-w-full bg-secondary flex flex-col shrink-0 snap-center shadow-sm',
+    'h-[75vh] max-h-[75vh] w-[300px] max-w-full bg-secondary flex flex-col shrink-0 snap-center shadow-sm',
     {
       variants: {
         dragging: {
           default: 'border-2 border-transparent',
-          over: 'ring-2 opacity-30',
-          overlay: 'ring-2 ring-primary'
+          over: 'ring-1 opacity-30',
+          overlay: 'ring-1 ring-primary'
         }
       }
     }
@@ -78,35 +77,35 @@ export function BoardColumn({ column, products, isOverlay }: BoardColumnProps) {
         dragging: isOverlay ? 'overlay' : isDragging ? 'over' : undefined
       })}
     >
-      <CardHeader className='space-between flex flex-row items-center border-b p-3 text-left font-medium'>
-        <Button
-          variant={'ghost'}
-          {...attributes}
-          {...listeners}
-          className='text-primary/50 relative -ml-2 h-auto cursor-grab p-1'
-        >
-          <span className='sr-only'>{`Move column: ${column.title}`}</span>
-          <IconGripVertical size={18} />
-        </Button>
-        <ColumnActions id={column.id} title={column.title} />
-      </CardHeader>
-      <CardContent className='flex grow flex-col p-2 pt-3 overflow-x-hidden'>
-        <div className='text-xs font-medium text-muted-foreground mb-2 ml-1 flex justify-between pr-1'>
-          <span>PRODUCTS ({products.length})</span>
-          <span>STATUS: {column.title}</span>
+      <div className='py-2 px-3 border-b flex flex-row items-center justify-between sticky top-0 bg-secondary z-10'>
+        <div className='flex items-center'>
+          <Button
+            variant='ghost'
+            {...attributes}
+            {...listeners}
+            className='text-primary/50 relative -ml-2 h-auto cursor-grab p-1'
+          >
+            <span className='sr-only'>{`Move column: ${column.title}`}</span>
+            <IconGripVertical size={16} />
+          </Button>
+          <ColumnActions id={column.id} title={column.title} />
         </div>
-        <ScrollArea className='h-full'>
-          <SortableContext items={productsIds}>
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-            {products.length === 0 && (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                No products yet
-              </div>
-            )}
-          </SortableContext>
-        </ScrollArea>
+        <div className='text-xs font-medium flex items-center gap-1.5 ml-auto text-muted-foreground'>
+          <IconPackage size={14} />
+          <span>{products.length}</span>
+        </div>
+      </div>
+      <CardContent className='flex-1 p-2 overflow-auto'>
+        <SortableContext items={productsIds}>
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+          {products.length === 0 && (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              No products yet
+            </div>
+          )}
+        </SortableContext>
       </CardContent>
     </Card>
   );
@@ -115,27 +114,13 @@ export function BoardColumn({ column, products, isOverlay }: BoardColumnProps) {
 export function BoardContainer({ children }: { children: React.ReactNode }) {
   const dndContext = useDndContext();
 
-  const variations = cva('px-2 pb-4 md:px-0 flex lg:justify-start', {
-    variants: {
-      dragging: {
-        default: '',
-        active: 'snap-none'
-      }
-    }
-  });
-
   return (
-    <ScrollArea className='w-full rounded-md whitespace-nowrap'>
-      <div
-        className={variations({
-          dragging: dndContext.active ? 'active' : 'default'
-        })}
-      >
-        <div className='flex flex-row items-start justify-center gap-4'>
+    <div className="w-full h-full overflow-hidden">
+      <div className="h-full overflow-x-auto pb-4">
+        <div className="inline-flex h-full px-2 space-x-4 min-w-full">
           {children}
         </div>
       </div>
-      <ScrollBar orientation='horizontal' />
-    </ScrollArea>
+    </div>
   );
 }

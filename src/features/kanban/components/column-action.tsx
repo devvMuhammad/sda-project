@@ -51,25 +51,25 @@ export function ColumnActions({
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className='mt-0! mr-auto text-base disabled:cursor-pointer disabled:border-none disabled:opacity-100'
+          className='h-7 text-sm w-32 disabled:cursor-pointer disabled:border-none disabled:opacity-100 disabled:p-0 disabled:h-auto font-medium'
           disabled={editDisable}
           ref={inputRef}
         />
       </form>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant='secondary' className='ml-1'>
+          <Button variant='ghost' size="sm" className='ml-1 h-6 w-6 p-0'>
             <span className='sr-only'>Actions</span>
-            <DotsHorizontalIcon className='h-4 w-4' />
+            <DotsHorizontalIcon className='h-3.5 w-3.5' />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
+        <DropdownMenuContent align='end' className="text-sm">
           <DropdownMenuItem
             onSelect={() => {
               setIsEditDisable(!editDisable);
               setTimeout(() => {
                 inputRef.current && inputRef.current?.focus();
-              }, 500);
+              }, 300);
             }}
           >
             Rename
@@ -88,10 +88,10 @@ export function ColumnActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Are you sure want to delete category?
+              Are you sure you want to delete this category?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              NOTE: All products related to this category will also be deleted.
+              All products in this category will also be removed from the board.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -104,7 +104,7 @@ export function ColumnActions({
 
                 setShowDeleteDialog(false);
                 removeCol(id);
-                toast('This category has been deleted.');
+                toast('Category deleted successfully');
               }}
             >
               Delete

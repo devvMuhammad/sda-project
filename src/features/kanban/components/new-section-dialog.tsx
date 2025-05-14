@@ -31,9 +31,9 @@ export default function NewSectionDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          variant='outline'
+          variant='secondary'
           size='lg'
-          className='w-full h-[75vh] max-h-[75vh] flex flex-col items-center justify-center shadow-sm bg-secondary/50 border-dashed'
+          className='w-[300px] h-[75vh] max-h-[75vh] flex flex-col items-center justify-center shadow-sm'
         >
           <IconPlus className="h-6 w-6 mb-2 text-muted-foreground" />
           <span className="text-muted-foreground">Add New Category</span>

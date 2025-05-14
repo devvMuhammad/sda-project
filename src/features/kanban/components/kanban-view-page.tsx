@@ -5,13 +5,15 @@ import NewProductDialog from './new-product-dialog';
 
 export default function KanbanViewPage() {
   return (
-    <PageContainer>
-      <div className='space-y-4'>
+    <PageContainer scrollable={false}>
+      <div className='flex h-[calc(100vh-5rem)] flex-col space-y-4'>
         <div className='flex items-start justify-between'>
           <Heading title={`Product Kanban`} description='Manage products with drag and drop' />
           <NewProductDialog />
         </div>
-        <KanbanBoard />
+        <div className="flex-1 overflow-hidden">
+          <KanbanBoard />
+        </div>
       </div>
     </PageContainer>
   );
